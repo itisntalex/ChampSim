@@ -1,7 +1,6 @@
 #!/bin/bash
 
-mkdir -p $PWD/../dpc3_traces
-while read LINE
-do
-    wget -P $PWD/../dpc3_traces -c http://hpca23.cse.tamu.edu/champsim-traces/speccpu/$LINE
-done < dpc3_max_simpoint.txt
+mkdir -p traces
+while IFS='' read -r trace_file; do
+  wget -P traces -c http://hpca23.cse.tamu.edu/champsim-traces/speccpu/$trace_file
+done < scripts/traces.txt
