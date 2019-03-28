@@ -2,3 +2,11 @@
 # process of the simulator. We should ignore the binary directory as well.
 bin/
 build/
+
+# Ignoring traces and results related directories.
+dpc3_traces/
+traces/
+results_*/
+
+# Ignoring files supposed to lay in clusters.
+*distant*
