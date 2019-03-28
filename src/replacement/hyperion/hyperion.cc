@@ -22,29 +22,29 @@ static Perceptron::FeaturePointerVector features;
  * data structures.
  */
 void CACHE::llc_initialize_replacement () {
-  // features.push_back (new AddressFeature(11, 8, 19, false));
-  // features.push_back (new BiasFeature (6, true));
-  // features.push_back (new InsertFeature (15, false));
-  // features.push_back (new InsertFeature (16, true));
-  // features.push_back (new InsertFeature (6, true));
-  // features.push_back (new OffsetFeature (15, 1, 6, true));
-  // features.push_back (new OffsetFeature (15, 3, 7, false));
-  // features.push_back (new PCFeature (11, 2, 24, 4, true));
-  // features.push_back (new PCFeature (15, 14, 32, 6, false));
-  // features.push_back (new PCFeature (15, 5, 28, 0, true));
-  // features.push_back (new PCFeature (16, 0, 16, 8, true));
-  // features.push_back (new PCFeature (17, 6, 20, 0, true));
-  // features.push_back (new PCFeature (6, 12, 14, 10, true));
-  // features.push_back (new PCFeature (7, 1, 24, 11, false));
-  // features.push_back (new PCFeature (7, 14, 43, 11, false));
-  // features.push_back (new PCFeature (8, 1, 61, 11, false));
+  features.push_back (new AddressFeature(11, 8, 19, false));
+  features.push_back (new BiasFeature (6, true));
+  features.push_back (new InsertFeature (15, false));
+  features.push_back (new InsertFeature (16, true));
+  features.push_back (new InsertFeature (6, true));
+  features.push_back (new OffsetFeature (15, 1, 6, true));
+  features.push_back (new OffsetFeature (15, 3, 7, false));
+  features.push_back (new PCFeature (11, 2, 24, 4, true));
+  features.push_back (new PCFeature (15, 14, 32, 6, false));
+  features.push_back (new PCFeature (15, 5, 28, 0, true));
+  features.push_back (new PCFeature (16, 0, 16, 8, true));
+  features.push_back (new PCFeature (17, 6, 20, 0, true));
+  features.push_back (new PCFeature (6, 12, 14, 10, true));
+  features.push_back (new PCFeature (7, 1, 24, 11, false));
+  features.push_back (new PCFeature (7, 14, 43, 11, false));
+  features.push_back (new PCFeature (8, 1, 61, 11, false));
 
-  features.push_back (new BiasFeature (0x12, true));
+  // features.push_back (new BiasFeature (0x12, true));
   // features.push_back (new AddressFeature (0x12, 6, 16, false));
 
-  for (size_t i = 0; i < 64; i++) {
-    features.push_back (new PCBitFeature (0x12, i, false));
-  }
+  // for (size_t i = 0; i < 64; i++) {
+  //   features.push_back (new PCBitFeature (0x12, i, false));
+  // }
 
   policy = new HyperionPolicy (features);
 }
@@ -90,7 +90,7 @@ void CACHE::llc_update_replacement_state (uint32_t cpu, uint32_t set, uint32_t w
  */
 void CACHE::llc_replacement_final_stats () {
   policy->finalStats ();
-  
+
   delete policy;
 
   for (Perceptron::FeaturePointerVector::iterator it = features.begin ();

@@ -55,8 +55,11 @@ Perceptron::Perceptron (const FeaturePointerVector &features) :
     current_feature = this->_features[i];
     switch (current_feature->type()) {
       case Features::BaseFeature::Insert:
-      case Features::BaseFeature::ProgramCounterBit:
-        table_entries = 2;
+        if (current_feature->xored ()) {
+          table_entries = 256;
+        } else {
+          table_entries = 2;
+        }
         break;
       case Features::BaseFeature::Bias:
         if (current_feature->xored()) {
@@ -107,17 +110,27 @@ void Perceptron::train (const Sampler::SamplerBlock &block, const Features::Base
              delta = 0x0;
 
   prediction = (block.lastConfValue () >= 200);
-  correct = (prediction && (type & OPTgenMiss)) ||
-            (!prediction && (type & OPTgenHit)) ||
-            !(type & SamplerDemotion) ||
-            !(type & LRUEviction);
+  // correct = (prediction && (type & OPTgenMiss)) ||
+  //           (!prediction && (type & OPTgenHit)) ||
+  //           !(type & SamplerDemotion) ||
+  //           !(type & LRUEviction);
+
+  if (prediction && (type & OPTgenMiss)) {
+    correct = true;
+  } else if (!prediction && (type & OPTgenHit)) {
+    correct = true;
+  } else if (type & SamplerDemotion) {
+    correct = false;
+  } else if (type & LRUEviction) {
+    correct = false;
+  }
 
   /*
    * If the magnitude of the last confidence value doesn't exceed a threshold,
    * we train the perceptron in order to get upcoming confidence value colser to
    * this threshold and make predictions more accurate.
    */
-  if (std::abs (block.lastConfValue ()) < 100) {
+  if (std::abs (block.lastConfValue ()) < 150) {
     do_train = true;
   }
 
@@ -156,8 +169,8 @@ void Perceptron::train (const Sampler::SamplerBlock &block, const Features::Base
       if (it->first->type () == Features::BaseFeature::ProgramCounterBit) {
         limit = -2;
       } else {
-        // limit = HYPERION_PERCEPTRON_WEIGHTS_MIN;
-        limit = INT8_MIN;
+        limit = HYPERION_PERCEPTRON_WEIGHTS_MIN;
+        // limit = INT8_MIN;
       }
 
       delta = -1;
@@ -171,8 +184,8 @@ void Perceptron::train (const Sampler::SamplerBlock &block, const Features::Base
       if (it->first->type () == Features::BaseFeature::ProgramCounterBit) {
         limit = 1;
       } else {
-        // limit = HYPERION_PERCEPTRON_WEIGHTS_MAX;
-        limit = INT8_MAX;
+        limit = HYPERION_PERCEPTRON_WEIGHTS_MAX;
+        // limit = INT8_MAX;
       }
 
       delta = 1;

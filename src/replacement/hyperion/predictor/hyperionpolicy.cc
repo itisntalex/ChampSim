@@ -163,6 +163,7 @@ void HyperionPolicy::updatePolicyState (uint32_t cpu, uint32_t set, uint32_t way
 uint8_t HyperionPolicy::findVictim (uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK *current_set, uint64_t ip, uint64_t full_addr, uint32_t type) {
   uint8_t max_rrip = 0,
           lru_victim = 0xFF;
+  bool switch_to_lru = true;
 
   Hyperion::Sampler::SamplerBlock fakeBlock, evictedBlock;
   Hyperion::Sampler::SamplerSet sampledSet;
@@ -172,27 +173,19 @@ uint8_t HyperionPolicy::findVictim (uint32_t cpu, uint64_t instr_id, uint32_t se
 
   for (std::size_t i = 0; i < LLC_WAY; i++) {
     if (this->_rrpv[set][i] == HYPERION_RRPV_MAX) {
-      return i;
-    }
-  }
-
-  for (std::size_t i = 0; i < LLC_WAY; i++) {
-    if (this->_rrpv[set][i] >= max_rrip) {
-      max_rrip = this->_rrpv[set][i];
       lru_victim = i;
+
+      // A proper victim has been found. No need to switch to loose LRU policy.
+      switch_to_lru = false;
     }
   }
 
-  assert (lru_victim != 0xFF);
-
-  if (this->_samp.isSampledSet (set)) {
-    sampledSet = this->_samp [this->_samp.translateSetIndex (set)];
-    evictedBlock = sampledSet [lru_victim];
-
-    if (evictedBlock.prefetched ()) {
-      this->_percPrefetch.train (evictedBlock, evictedBlock.lastTrace (), Perceptron::LRUEviction);
-    } else {
-      this->_perc.train (evictedBlock, evictedBlock.lastTrace (), Perceptron::LRUEviction);
+  if (switch_to_lru) {
+    for (std::size_t i = 0; i < LLC_WAY; i++) {
+      if (this->_rrpv[set][i] >= max_rrip) {
+        max_rrip = this->_rrpv[set][i];
+        lru_victim = i;
+      }
     }
   }
 
@@ -211,12 +204,23 @@ uint8_t HyperionPolicy::findVictim (uint32_t cpu, uint64_t instr_id, uint32_t se
       // Accounting for this bypass prediction.
       this->_metrics["PREDICTED_BYPASS"]++;
 
-      return LLC_WAY;
+      lru_victim = LLC_WAY;
     } else {
       this->_shadowCache.unmarkBypassed (set, ShadowCache::CacheBlock (HYPERION_RRPV_MAX, full_addr) );
 
       // Accounting for this no-bypass prediction.
       this->_metrics["PREDICTED_NO_BYPASS"]++;
+    }
+  }
+
+  if (this->_samp.isSampledSet (set) && switch_to_lru && lru_victim != LLC_WAY) {
+    sampledSet = this->_samp [this->_samp.translateSetIndex (set)];
+    evictedBlock = sampledSet [lru_victim];
+
+    if (evictedBlock.prefetched ()) {
+      this->_percPrefetch.train (evictedBlock, evictedBlock.lastTrace (), Perceptron::LRUEviction);
+    } else {
+      this->_perc.train (evictedBlock, evictedBlock.lastTrace (), Perceptron::LRUEviction);
     }
   }
 

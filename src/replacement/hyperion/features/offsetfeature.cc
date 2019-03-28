@@ -24,7 +24,7 @@ OffsetFeature::~OffsetFeature () {
  */
 OffsetFeature::OutputType OffsetFeature::build (const FeatureParameterList &params) {
   uint64_t r = 0x0,
-           mask = 0x0;
+           mask = (1ULL << (this->_end - this->_begin)) - 1ULL;
 
   // First, we calculate a mask to isolate some bits of the w-th most recent PC.
   for (std::size_t i = this->_begin; i <= this->_end; i++) {
@@ -32,7 +32,7 @@ OffsetFeature::OutputType OffsetFeature::build (const FeatureParameterList &para
   }
 
   // We extract some bits from the w-th most recent PC using the mask calculated above.
-  r = (params.at(0) & mask);
+  r = ((params.at(0) >> this->_begin) & mask);
 
   // If we asked for it, we xor the result with the current PC.
   if (this->xored()) {
